@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<!-- VIBORA SKIN VISUAL AUDIT V2: 23/23 APPEARANCES -->
 <title>Víbora.io — HUB + Arena</title>
 <style>
 :root {
@@ -999,7 +1000,7 @@ function renderSkins(){
     let meta='',status='';
     if(s.type==='gold'){
       status='OURO';
-      meta=s.price===0?'Skin inicial gratuita':(skinHasArenaVisual(s)?'VISUAL PRÓPRIO NA ARENA • Comprada com moedas de ouro':'Comprada com moedas de ouro');
+      meta=s.price===0?'Skin inicial gratuita':(skinHasArenaVisual(s)?'APARÊNCIA PRÓPRIA NA ARENA • Comprada com moedas de ouro':'Comprada com moedas de ouro');
     }else if(s.type==='patent'){
       status='PATENTE';
       meta='Libera em '+patentGroupLabel(s.requiredIndex);
@@ -1022,7 +1023,7 @@ function renderSkins(){
 
     c.innerHTML=`
       <div class="skinVisual">
-        <span class="skinStatus ${s.type}">${status}</span>${skinHasArenaVisual(s)?'<span class="skinExactBadge">VISUAL DA ARENA</span>':''}
+        <span class="skinStatus ${s.type}">${status}</span>${skinHasArenaVisual(s)?'<span class="skinExactBadge">APARÊNCIA COMPLETA</span>':''}
         <img src="${s.image}" alt="${s.name}">
       </div>
       <div class="skinBody">
@@ -1328,10 +1329,10 @@ function drawRecoveredHead(context,skin,x,y,r,angle){const sprite=recoveredSprit
    As demais usam o próprio artwork da loja como textura + geometria exclusiva.
 */
 const skinAppearanceProfiles={
-  green:{kind:'natural',level:1,base:'#0d6b35',dark:'#042817',accent:'#65ff8f',detail:'#caff8a',bx:.46,by:.55,hx:.69,hy:.42,bzoom:.38,hzoom:.42},
+  green:{kind:'natural',level:1,base:'#0d6b35',dark:'#042817',accent:'#65ff8f',detail:'#caff8a',bx:.46,by:.55,hx:.69,hy:.42,bzoom:.30,hzoom:.34},
   aurora:{kind:'aurora',level:1,base:'#087ea7',dark:'#072a50',accent:'#49f5ff',detail:'#9b7dff',bx:.43,by:.60,hx:.70,hy:.44,bzoom:.40,hzoom:.40},
-  lunar:{kind:'lunar',level:1,base:'#46327c',dark:'#171329',accent:'#b898ff',detail:'#e8ddff',bx:.45,by:.62,hx:.70,hy:.48,bzoom:.38,hzoom:.42},
-  toxica:{kind:'toxic',level:1,base:'#2d8b15',dark:'#09210a',accent:'#8dff39',detail:'#d7ff74',bx:.44,by:.56,hx:.68,hy:.43,bzoom:.38,hzoom:.42},
+  lunar:{kind:'lunar',level:1,base:'#46327c',dark:'#171329',accent:'#b898ff',detail:'#e8ddff',bx:.45,by:.62,hx:.70,hy:.48,bzoom:.30,hzoom:.34},
+  toxica:{kind:'toxic',level:1,base:'#071209',dark:'#020704',accent:'#8dff39',detail:'#d7ff74',bx:.44,by:.56,hx:.68,hy:.43,bzoom:.30,hzoom:.34},
 
   pat_cadete:{kind:'patent',level:1,base:'#1e8a59',dark:'#0a2f25',accent:'#66ffc0',detail:'#d6fff0',bx:.55,by:.68,hx:.58,hy:.60,bzoom:.34,hzoom:.46},
   pat_soldado:{kind:'patent',level:2,base:'#76592d',dark:'#2b2418',accent:'#d6ad69',detail:'#ffe2a8',bx:.55,by:.70,hx:.58,hy:.61,bzoom:.34,hzoom:.46},
@@ -1387,6 +1388,9 @@ function platePath(c,w,h,kind){
     c.quadraticCurveTo(-w*.35,h*.42,-w*.48,-h*.10);c.closePath();
   }else if(kind==='lunar'){
     c.ellipse(0,0,w*.50,h*.43,-.04,0,Math.PI*2);
+  }else if(kind==='toxic'){
+    c.moveTo(-w*.48,0);c.lineTo(-w*.32,-h*.43);c.lineTo(0,-h*.50);c.lineTo(w*.36,-h*.38);
+    c.lineTo(w*.50,0);c.lineTo(w*.34,h*.38);c.lineTo(0,h*.50);c.lineTo(-w*.32,h*.43);c.closePath();
   }else{
     c.ellipse(0,0,w*.50,h*.46,0,0,Math.PI*2);
   }
@@ -1412,28 +1416,122 @@ function drawDorsalSpikes(c,p,w,h,level,strong=false){
     c.beginPath();c.moveTo(xx-h*.10,-h*.34);c.lineTo(xx,-h*.34-hh);c.lineTo(xx+h*.10,-h*.34);c.closePath();c.fill();
   }
 }
-function drawBodyMotif(c,p,w,h,index,isPlayer){
-  const level=p.level||1;
+
+function drawRadiationSymbol(c,x,y,r,fg='#071309',bg='#a8ff35'){
+  c.save();c.translate(x,y);
+  c.fillStyle=bg;c.beginPath();c.arc(0,0,r,0,Math.PI*2);c.fill();
+  c.fillStyle=fg;c.beginPath();c.arc(0,0,r*.18,0,Math.PI*2);c.fill();
+  for(let k=0;k<3;k++){
+    c.save();c.rotate(k*Math.PI*2/3);
+    c.beginPath();
+    c.moveTo(r*.28,-r*.11);c.arc(0,0,r*.72,-.28,.28);c.lineTo(r*.28,r*.11);c.closePath();c.fill();
+    c.restore();
+  }
+  c.restore();
+}
+function drawHazardBand(c,w,h){
+  const y=-h*.10,hh=h*.20;
+  c.save();c.beginPath();c.rect(-w*.42,y,w*.84,hh);c.clip();
+  c.fillStyle='#cfff28';c.fillRect(-w*.42,y,w*.84,hh);
+  c.strokeStyle='#10180d';c.lineWidth=h*.13;
+  for(let x=-w*.60;x<w*.65;x+=h*.30){
+    c.beginPath();c.moveTo(x,y+hh);c.lineTo(x+h*.34,y);c.stroke();
+  }
+  c.restore();
+}
+function drawCrystal(c,x,y,s,color){
+  c.fillStyle=color;c.beginPath();
+  c.moveTo(x,y-s);c.lineTo(x+s*.55,y);c.lineTo(x,y+s*.60);c.lineTo(x-s*.55,y);c.closePath();c.fill();
+}
+function drawFlame(c,x,y,s,color){
+  c.fillStyle=color;c.beginPath();
+  c.moveTo(x,y+s*.55);c.quadraticCurveTo(x-s*.7,y,x,y-s);
+  c.quadraticCurveTo(x+s*.70,y-s*.05,x,y+s*.55);c.fill();
+}
+function drawChevron(c,x,y,w,h,color,thick=1){
+  c.strokeStyle=color;c.lineWidth=Math.max(1,h*.09*thick);c.lineCap='round';c.lineJoin='round';
+  c.beginPath();c.moveTo(x-w*.5,y-h*.25);c.lineTo(x,y+h*.25);c.lineTo(x+w*.5,y-h*.25);c.stroke();
+}
+function drawBodyMotif(c,skin,p,w,h,index,isPlayer){
+  const id=skin.id,level=p.level||1;
   c.lineWidth=Math.max(1,h*.055);
-  if(p.kind==='natural'){
-    c.strokeStyle=rgbHexAlpha(p.detail,.45);c.beginPath();c.arc(-w*.12,0,h*.18,Math.PI*.9,Math.PI*1.9);c.stroke();
-  }else if(p.kind==='aurora'){
-    c.strokeStyle=rgbHexAlpha(p.detail,.70);c.beginPath();c.moveTo(-w*.36,-h*.12);c.quadraticCurveTo(0,h*.35,w*.36,-h*.12);c.stroke();
-    c.shadowColor=p.accent;c.shadowBlur=isPlayer?10:4;
-  }else if(p.kind==='lunar'){
-    c.strokeStyle=rgbHexAlpha(p.detail,.85);c.beginPath();c.arc(0,0,h*.24,-1.15,1.15);c.stroke();
-  }else if(p.kind==='toxic'){
-    c.fillStyle=rgbHexAlpha(p.detail,.70);
-    for(let q=0;q<3;q++){c.beginPath();c.arc((-1+q)*w*.16,(q%2?.10:-.08)*h,h*.075,0,Math.PI*2);c.fill();}
-    if(index%4===0)drawDorsalSpikes(c,p,w,h,2,false);
+
+  if(id==='green'){
+    c.strokeStyle=rgbHexAlpha('#c9ffd2',.58);
+    for(let q=-1;q<=1;q++){
+      c.beginPath();c.ellipse(q*w*.17,(q%2)*h*.08,h*.14,h*.10,0,0,Math.PI*2);c.stroke();
+    }
+    if(index%4===0){
+      c.fillStyle=rgbHexAlpha('#78ff99',.75);
+      c.beginPath();c.arc(0,0,h*.09,0,Math.PI*2);c.fill();
+    }
+  }else if(id==='aurora'){
+    const g=c.createLinearGradient(-w*.45,0,w*.45,0);
+    g.addColorStop(0,'#39f5ff');g.addColorStop(.5,'#8d5dff');g.addColorStop(1,'#ff75dc');
+    c.strokeStyle=g;c.lineWidth=h*.12;
+    c.beginPath();c.moveTo(-w*.42,-h*.16);c.bezierCurveTo(-w*.10,h*.35,w*.08,-h*.33,w*.42,h*.10);c.stroke();
+    c.strokeStyle='rgba(232,255,255,.75)';c.lineWidth=h*.045;
+    c.beginPath();c.moveTo(-w*.35,h*.18);c.quadraticCurveTo(0,-h*.18,w*.36,h*.15);c.stroke();
+    c.fillStyle='rgba(133,255,252,.38)';
+    c.beginPath();c.ellipse(0,-h*.38,w*.24,h*.14,0,0,Math.PI*2);c.fill();
+  }else if(id==='lunar'){
+    c.fillStyle='rgba(14,16,36,.72)';c.beginPath();c.ellipse(0,0,w*.35,h*.34,0,0,Math.PI*2);c.fill();
+    c.strokeStyle='#dfd7ff';c.lineWidth=h*.12;
+    c.beginPath();c.arc(0,0,h*.26,-1.05,1.05);c.stroke();
+    c.fillStyle='#f4ecff';
+    for(let q=0;q<3;q++){c.beginPath();c.arc((-1+q)*w*.18,(q%2?-.12:.13)*h,h*.035*(q+1),0,Math.PI*2);c.fill();}
+  }else if(id==='toxica'){
+    // RADIOACTIVE: black armored scales, acid goo, hazard stripe, radiation emblem and spikes.
+    c.fillStyle='rgba(4,13,7,.82)';
+    for(let q=-1;q<=1;q++){
+      c.beginPath();c.ellipse(q*w*.17,(q%2)*h*.08,h*.16,h*.12,0,0,Math.PI*2);c.fill();
+      c.strokeStyle='rgba(102,255,47,.65)';c.lineWidth=h*.035;c.stroke();
+    }
+    drawHazardBand(c,w,h);
+    if(index%3===0) drawRadiationSymbol(c,0,0,h*.16,'#071109','#b7ff28');
+    // acid bubbles
+    c.fillStyle='rgba(116,255,39,.85)';
+    for(let q=0;q<3;q++){
+      const bx=(-.25+q*.24)*w, by=(q%2?.28:-.30)*h;
+      c.beginPath();c.arc(bx,by,h*(.045+.018*q),0,Math.PI*2);c.fill();
+    }
+    // toxic dorsal crystals on frequent plates
+    if(index%2===0){
+      c.fillStyle='#8cff2c';
+      for(let q=-1;q<=1;q++){
+        const xx=q*w*.18;
+        c.beginPath();c.moveTo(xx-h*.10,-h*.34);c.lineTo(xx,-h*.75);c.lineTo(xx+h*.10,-h*.34);c.closePath();c.fill();
+      }
+    }
   }else if(p.kind==='patent'){
-    c.strokeStyle=rgbHexAlpha(p.detail,.68);
-    for(let q=0;q<Math.min(3,Math.ceil(level/2));q++){const x=-w*.18+q*w*.18;c.beginPath();c.moveTo(x,-h*.30);c.lineTo(x+h*.16,0);c.lineTo(x,h*.30);c.stroke();}
-    if(level>=5&&index%3===0)drawDorsalSpikes(c,p,w,h,level,false);
+    // PATENTE = military/ceremonial armor, increasing from simple metal to legendary crown.
+    const metal=[null,'#b9d8c8','#d0a46f','#7dcaff','#c07cff','#ffd166','#ff6b52','#69ff9b'][level];
+    c.fillStyle=rgbHexAlpha(p.dark,.78);c.fillRect(-w*.31,-h*.29,w*.62,h*.58);
+    c.strokeStyle=metal;c.lineWidth=h*.065;c.strokeRect(-w*.31,-h*.29,w*.62,h*.58);
+    drawChevron(c,0,0,w*.48,h*.56,metal,1.1);
+    if(level>=3){ drawCrystal(c,-w*.23,0,h*.15,metal); drawCrystal(c,w*.23,0,h*.15,metal); }
+    if(level>=5 && index%2===0) drawDorsalSpikes(c,p,w,h,level,false);
+    if(level>=6){
+      c.strokeStyle=rgbHexAlpha(metal,.95);c.lineWidth=h*.055;
+      c.beginPath();c.arc(0,0,h*.32,Math.PI*.10,Math.PI*.90);c.stroke();
+    }
   }else if(p.kind==='ranked'){
-    c.strokeStyle=rgbHexAlpha(p.detail,.9);
-    c.beginPath();c.moveTo(-w*.34,0);c.lineTo(-w*.10,-h*.24);c.lineTo(w*.12,0);c.lineTo(w*.34,-h*.24);c.stroke();
-    if(index%2===0)drawDorsalSpikes(c,p,w,h,level,true);
+    // RANQUEADA = sharper and more aggressive competitive armor.
+    const col=[null,'#62ff9c','#ffad42','#4fb6ff','#bf4dff','#ffb51b','#ff3d2e','#36ff70'][level];
+    c.fillStyle='rgba(5,8,12,.78)';
+    c.beginPath();c.moveTo(-w*.38,0);c.lineTo(-w*.18,-h*.34);c.lineTo(w*.22,-h*.34);c.lineTo(w*.40,0);c.lineTo(w*.20,h*.34);c.lineTo(-w*.18,h*.34);c.closePath();c.fill();
+    c.strokeStyle=col;c.lineWidth=h*.075;c.stroke();
+    drawChevron(c,0,-h*.02,w*.52,h*.62,col,1.25);
+    if(level>=3){
+      c.fillStyle=rgbHexAlpha(col,.92);
+      c.beginPath();c.moveTo(-w*.30,-h*.30);c.lineTo(-w*.04,-h*.62);c.lineTo(-w*.03,-h*.28);c.closePath();c.fill();
+      c.beginPath();c.moveTo(w*.30,-h*.30);c.lineTo(w*.04,-h*.62);c.lineTo(w*.03,-h*.28);c.closePath();c.fill();
+    }
+    if(level>=5 && index%2===0) drawDorsalSpikes(c,p,w,h,level,true);
+    if(level>=6){
+      c.shadowColor=col;c.shadowBlur=isPlayer?12:5;
+      c.strokeStyle=col;c.lineWidth=h*.10;c.beginPath();c.arc(0,0,h*.30,0,Math.PI*2);c.stroke();c.shadowBlur=0;
+    }
   }
   c.shadowBlur=0;
 }
@@ -1448,33 +1546,100 @@ function drawTexturedPlate(c,skin,p,img,x,y,r,angle,taper,index,isPlayer){
   }
   c.restore();
   platePath(c,w,h,p.kind);c.strokeStyle=rgbHexAlpha(p.accent,.68);c.lineWidth=Math.max(1,h*.045);c.stroke();
-  drawBodyMotif(c,p,w,h,index,isPlayer);
+  drawBodyMotif(c,skin,p,w,h,index,isPlayer);
   c.restore();
 }
-function drawHeadOrnaments(c,p,r,isPlayer){
-  const level=p.level||1;
+
+function drawHeadOrnaments(c,skin,p,r,isPlayer){
+  const id=skin.id,level=p.level||1;
   c.lineWidth=Math.max(1,r*.10);
-  if(p.kind==='aurora'){
-    c.strokeStyle=rgbHexAlpha(p.detail,.9);c.shadowColor=p.accent;c.shadowBlur=isPlayer?14:5;
-    c.beginPath();c.arc(-r*.10,0,r*1.25,-1.05,1.05);c.stroke();c.shadowBlur=0;
-  }else if(p.kind==='lunar'){
-    c.strokeStyle=rgbHexAlpha(p.detail,.95);c.lineWidth=r*.16;
-    c.beginPath();c.arc(r*.18,-r*.14,r*.64,-1.05,1.05);c.stroke();
-  }else if(p.kind==='toxic'){
-    c.fillStyle=rgbHexAlpha(p.accent,.95);
-    for(let k=-1;k<=1;k++){c.beginPath();c.moveTo(-r*.35,k*r*.28);c.lineTo(-r*1.15,k*r*.38);c.lineTo(-r*.42,k*r*.10);c.closePath();c.fill();}
+
+  // front eyes so every generated appearance reads as a creature, not just a color.
+  const eyeColor=id==='toxica'?'#baff27':p.detail;
+  c.shadowColor=eyeColor;c.shadowBlur=isPlayer?9:4;c.fillStyle=eyeColor;
+  for(const yy of [-.30,.30]){
+    c.beginPath();c.ellipse(r*.78,yy*r,r*.18,r*.09,0,0,Math.PI*2);c.fill();
+  }
+  c.shadowBlur=0;
+
+  if(id==='green'){
+    c.strokeStyle='#baffc8';c.lineWidth=r*.08;
+    c.beginPath();c.moveTo(r*.25,-r*.55);c.quadraticCurveTo(r*.75,-r*.80,r*1.05,-r*.48);c.stroke();
+    c.beginPath();c.moveTo(r*.25,r*.55);c.quadraticCurveTo(r*.75,r*.80,r*1.05,r*.48);c.stroke();
+  }else if(id==='aurora'){
+    const g=c.createLinearGradient(-r,0,r,0);g.addColorStop(0,'#3df8ff');g.addColorStop(.5,'#9c5fff');g.addColorStop(1,'#ff70d6');
+    c.strokeStyle=g;c.lineWidth=r*.18;c.shadowColor='#5ffcff';c.shadowBlur=isPlayer?16:7;
+    c.beginPath();c.moveTo(-r*.55,-r*.58);c.bezierCurveTo(0,-r*1.35,r*.55,-r*.95,r*1.10,-r*.62);c.stroke();
+    c.beginPath();c.moveTo(-r*.55,r*.58);c.bezierCurveTo(0,r*1.35,r*.55,r*.95,r*1.10,r*.62);c.stroke();c.shadowBlur=0;
+  }else if(id==='lunar'){
+    c.strokeStyle='#efe6ff';c.lineWidth=r*.18;
+    c.beginPath();c.arc(r*.08,0,r*.68,-1.08,1.08);c.stroke();
+    c.fillStyle='#d8c8ff';
+    for(const yy of [-1,1]){
+      c.beginPath();c.moveTo(-r*.10,yy*r*.50);c.lineTo(-r*.42,yy*r*1.08);c.lineTo(r*.10,yy*r*.62);c.closePath();c.fill();
+    }
+  }else if(id==='toxica'){
+    // Massive radioactive identity: hazard forehead plate, mutated horns, acid fangs, toxic bubbles.
+    c.fillStyle='rgba(2,10,4,.88)';
+    c.beginPath();c.ellipse(r*.15,0,r*.92,r*.72,0,0,Math.PI*2);c.fill();
+    drawRadiationSymbol(c,r*.12,0,r*.34,'#061006','#baff25');
+    c.fillStyle='#9cff2e';
+    for(const yy of [-1,1]){
+      c.beginPath();c.moveTo(-r*.28,yy*r*.38);c.lineTo(-r*1.20,yy*r*.92);c.lineTo(-r*.52,yy*r*.18);c.closePath();c.fill();
+      c.beginPath();c.moveTo(r*.28,yy*r*.48);c.lineTo(r*.12,yy*r*1.02);c.lineTo(r*.58,yy*r*.52);c.closePath();c.fill();
+    }
+    // acid fangs
+    c.fillStyle='#eaffc7';
+    for(const yy of [-1,1]){
+      c.beginPath();c.moveTo(r*.92,yy*r*.22);c.lineTo(r*1.45,yy*r*.34);c.lineTo(r*.98,yy*r*.44);c.closePath();c.fill();
+    }
+    // dripping acid strands
+    c.strokeStyle='#7dff24';c.lineWidth=r*.12;c.lineCap='round';
+    for(const yy of [-.34,0,.34]){
+      c.beginPath();c.moveTo(r*.98,yy*r);c.lineTo(r*1.38,yy*r+r*.10);c.stroke();
+    }
+    c.fillStyle='rgba(121,255,35,.78)';
+    for(let q=0;q<4;q++){
+      c.beginPath();c.arc((-1.0+q*.35)*r,(-.70+(q%2)*1.35)*r,r*(.09+.025*q),0,Math.PI*2);c.fill();
+    }
   }else if(p.kind==='patent'){
-    c.strokeStyle=rgbHexAlpha(p.detail,.9);
-    const n=Math.min(4,Math.ceil(level/2));
-    for(let k=0;k<n;k++){const yy=(k-(n-1)/2)*r*.22;c.beginPath();c.moveTo(-r*.55,yy);c.lineTo(-r*.12,yy-r*.18);c.lineTo(r*.22,yy);c.stroke();}
-    if(level>=6){c.fillStyle=rgbHexAlpha(p.accent,.95);c.beginPath();c.moveTo(-r*.10,-r*.72);c.lineTo(r*.22,-r*1.25);c.lineTo(r*.45,-r*.68);c.closePath();c.fill();}
+    const metal=[null,'#c3e4d2','#d9a96f','#78caff','#c278ff','#ffd56a','#ff6a52','#61ff91'][level];
+    // helmet/crest silhouette
+    c.strokeStyle=metal;c.lineWidth=r*.13;
+    c.beginPath();c.moveTo(-r*.55,-r*.55);c.lineTo(-r*.10,-r*.92);c.lineTo(r*.62,-r*.58);c.stroke();
+    c.beginPath();c.moveTo(-r*.55,r*.55);c.lineTo(-r*.10,r*.92);c.lineTo(r*.62,r*.58);c.stroke();
+    drawChevron(c,r*.02,0,r*.90,r*.80,metal,1.2);
+    if(level>=3){drawCrystal(c,-r*.15,-r*.78,r*.22,metal);drawCrystal(c,-r*.15,r*.78,r*.22,metal);}
+    if(level>=5){
+      c.fillStyle=metal;
+      for(const yy of [-1,1]){c.beginPath();c.moveTo(-r*.25,yy*r*.62);c.lineTo(-r*.45,yy*r*1.25);c.lineTo(r*.12,yy*r*.74);c.closePath();c.fill();}
+    }
+    if(level>=7){
+      c.fillStyle='#ffe26f';c.beginPath();c.moveTo(-r*.10,-r*.95);c.lineTo(r*.30,-r*1.45);c.lineTo(r*.58,-r*.90);c.closePath();c.fill();
+    }
   }else if(p.kind==='ranked'){
-    c.fillStyle=rgbHexAlpha(p.accent,.96);
-    const crown=Math.min(4,Math.ceil(level/2));
-    for(let k=0;k<crown;k++){const xx=(-.35+k*(.70/Math.max(1,crown-1)))*r;c.beginPath();c.moveTo(xx-r*.12,-r*.62);c.lineTo(xx,-r*(1.15+.06*level));c.lineTo(xx+r*.12,-r*.62);c.closePath();c.fill();}
-    c.strokeStyle=rgbHexAlpha(p.detail,.9);c.beginPath();c.arc(r*.10,0,r*.82,-.55,.55);c.stroke();
-  }else if(p.kind==='natural'){
-    c.strokeStyle=rgbHexAlpha(p.detail,.7);c.beginPath();c.arc(r*.20,0,r*.75,-.45,.45);c.stroke();
+    const col=[null,'#62ff9c','#ffad42','#4fb6ff','#bf4dff','#ffb51b','#ff3d2e','#36ff70'][level];
+    // predatory side blades and crown.
+    c.fillStyle=col;
+    const blades=level>=5?3:2;
+    for(const yy of [-1,1]){
+      for(let k=0;k<blades;k++){
+        const bx=(-.45+k*.30)*r;
+        c.beginPath();c.moveTo(bx,yy*r*.55);c.lineTo(bx-r*.18,yy*r*(1.05+.14*k));c.lineTo(bx+r*.20,yy*r*.62);c.closePath();c.fill();
+      }
+    }
+    drawChevron(c,r*.10,0,r*.90,r*.82,col,1.3);
+    if(level>=4){
+      c.strokeStyle=col;c.lineWidth=r*.12;c.shadowColor=col;c.shadowBlur=isPlayer?13:5;
+      c.beginPath();c.arc(r*.20,0,r*.60,-.75,.75);c.stroke();c.shadowBlur=0;
+    }
+    if(level>=6){
+      c.fillStyle=col;
+      for(let k=-1;k<=1;k++){const yy=k*r*.30;c.beginPath();c.moveTo(-r*.45,yy);c.lineTo(-r*1.28,yy);c.lineTo(-r*.58,yy+r*.16);c.closePath();c.fill();}
+    }
+    if(level>=7){
+      c.fillStyle='#ffe268';c.beginPath();c.moveTo(-r*.15,-r*.92);c.lineTo(r*.25,-r*1.50);c.lineTo(r*.55,-r*.90);c.closePath();c.fill();
+    }
   }
 }
 function drawTexturedHead(c,skin,p,img,x,y,r,angle,isPlayer){
@@ -1489,7 +1654,7 @@ function drawTexturedHead(c,skin,p,img,x,y,r,angle,isPlayer){
   }
   c.restore();
   c.beginPath();c.ellipse(0,0,w*.5,h*.5,0,0,Math.PI*2);c.strokeStyle=rgbHexAlpha(p.accent,.88);c.lineWidth=Math.max(1,r*.10);c.stroke();
-  drawHeadOrnaments(c,p,r,isPlayer);
+  drawHeadOrnaments(c,skin,p,r,isPlayer);
   c.restore();
 }
 function drawProfileSnake(c,s,skin){
