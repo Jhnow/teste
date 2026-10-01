@@ -995,11 +995,11 @@ function renderSkins(){
     const owned=s.type==='gold' ? (state.owned.has(s.id)||s.price===0) : unlocked;
     const equippedNow=state.equipped===s.id;
     const c=document.createElement('div');
-    c.className='skinShopCard'+(equippedNow?' equipped':'')+(!unlocked?' locked':'')+(s.combatSprite?' exactSprite':'');
+    c.className='skinShopCard'+(equippedNow?' equipped':'')+(!unlocked?' locked':'')+(skinHasArenaVisual(s)?' exactSprite':'');
     let meta='',status='';
     if(s.type==='gold'){
       status='OURO';
-      meta=s.price===0?'Skin inicial gratuita':(s.combatSprite?'MESMA SKIN DA ARENA • Comprada com moedas de ouro':'Comprada com moedas de ouro');
+      meta=s.price===0?'Skin inicial gratuita':(skinHasArenaVisual(s)?'VISUAL PRÓPRIO NA ARENA • Comprada com moedas de ouro':'Comprada com moedas de ouro');
     }else if(s.type==='patent'){
       status='PATENTE';
       meta='Libera em '+patentGroupLabel(s.requiredIndex);
@@ -1022,7 +1022,7 @@ function renderSkins(){
 
     c.innerHTML=`
       <div class="skinVisual">
-        <span class="skinStatus ${s.type}">${status}</span>${s.combatSprite?'<span class="skinExactBadge">VISUAL DA ARENA</span>':''}
+        <span class="skinStatus ${s.type}">${status}</span>${skinHasArenaVisual(s)?'<span class="skinExactBadge">VISUAL DA ARENA</span>':''}
         <img src="${s.image}" alt="${s.name}">
       </div>
       <div class="skinBody">
@@ -1321,10 +1321,206 @@ function recoveredSpriteForSkin(skin){return skin?.combatSprite?recoveredSpriteC
 function drawRecoveredBody(context,skin,x,y,r,angle,taper=1){const sprite=recoveredSpriteForSkin(skin)?.body;if(!sprite||!sprite.complete||!sprite.naturalWidth)return false;const h=r*2.2*taper,w=h*sprite.naturalWidth/sprite.naturalHeight;context.save();context.translate(x,y);context.rotate(angle);context.drawImage(sprite,-w/2,-h/2,w,h);context.restore();return true;}
 function drawRecoveredHead(context,skin,x,y,r,angle){const sprite=recoveredSpriteForSkin(skin)?.head;if(!sprite||!sprite.complete||!sprite.naturalWidth)return false;const h=r*2*(skin.headScale||1.6),w=h*sprite.naturalWidth/sprite.naturalHeight;context.save();context.translate(x,y);context.rotate(angle);context.drawImage(sprite,-w*.53,-h/2,w,h);context.restore();return true;}
 
+
+/* ===== REVISÃO COMPLETA DE APARÊNCIA DAS SKINS =====
+   Toda skin precisa ter uma aparência real na arena.
+   As 5 skins recuperadas do atlas antigo continuam usando sprites reais.
+   As demais usam o próprio artwork da loja como textura + geometria exclusiva.
+*/
+const skinAppearanceProfiles={
+  green:{kind:'natural',level:1,base:'#0d6b35',dark:'#042817',accent:'#65ff8f',detail:'#caff8a',bx:.46,by:.55,hx:.69,hy:.42,bzoom:.38,hzoom:.42},
+  aurora:{kind:'aurora',level:1,base:'#087ea7',dark:'#072a50',accent:'#49f5ff',detail:'#9b7dff',bx:.43,by:.60,hx:.70,hy:.44,bzoom:.40,hzoom:.40},
+  lunar:{kind:'lunar',level:1,base:'#46327c',dark:'#171329',accent:'#b898ff',detail:'#e8ddff',bx:.45,by:.62,hx:.70,hy:.48,bzoom:.38,hzoom:.42},
+  toxica:{kind:'toxic',level:1,base:'#2d8b15',dark:'#09210a',accent:'#8dff39',detail:'#d7ff74',bx:.44,by:.56,hx:.68,hy:.43,bzoom:.38,hzoom:.42},
+
+  pat_cadete:{kind:'patent',level:1,base:'#1e8a59',dark:'#0a2f25',accent:'#66ffc0',detail:'#d6fff0',bx:.55,by:.68,hx:.58,hy:.60,bzoom:.34,hzoom:.46},
+  pat_soldado:{kind:'patent',level:2,base:'#76592d',dark:'#2b2418',accent:'#d6ad69',detail:'#ffe2a8',bx:.55,by:.70,hx:.58,hy:.61,bzoom:.34,hzoom:.46},
+  pat_elite:{kind:'patent',level:3,base:'#155b8f',dark:'#082642',accent:'#55bfff',detail:'#d6f1ff',bx:.55,by:.70,hx:.58,hy:.60,bzoom:.34,hzoom:.46},
+  pat_mestre:{kind:'patent',level:4,base:'#5d288d',dark:'#241032',accent:'#c76bff',detail:'#f0d4ff',bx:.54,by:.70,hx:.58,hy:.60,bzoom:.34,hzoom:.46},
+  pat_predador:{kind:'patent',level:5,base:'#8e621c',dark:'#38250a',accent:'#ffc84f',detail:'#fff0a6',bx:.54,by:.70,hx:.58,hy:.60,bzoom:.34,hzoom:.46},
+  pat_lenda:{kind:'patent',level:6,base:'#8e221f',dark:'#350808',accent:'#ff5a44',detail:'#ffd3ad',bx:.54,by:.70,hx:.58,hy:.60,bzoom:.34,hzoom:.46},
+  pat_suprema:{kind:'patent',level:7,base:'#16824b',dark:'#07351e',accent:'#55ff8a',detail:'#ffd861',bx:.54,by:.70,hx:.58,hy:.60,bzoom:.34,hzoom:.46},
+
+  rank_cadete:{kind:'ranked',level:1,base:'#0f7f49',dark:'#042819',accent:'#38ff91',detail:'#d2ffe2',bx:.54,by:.68,hx:.58,hy:.60,bzoom:.34,hzoom:.46},
+  rank_soldado:{kind:'ranked',level:2,base:'#7c5727',dark:'#2d1d0c',accent:'#ffb84c',detail:'#ffe0a0',bx:.54,by:.69,hx:.58,hy:.60,bzoom:.34,hzoom:.46},
+  rank_elite:{kind:'ranked',level:3,base:'#0e5fa5',dark:'#05233f',accent:'#35aaff',detail:'#c8ecff',bx:.54,by:.69,hx:.58,hy:.60,bzoom:.34,hzoom:.46},
+  rank_mestre:{kind:'ranked',level:4,base:'#6123a7',dark:'#220b3d',accent:'#c547ff',detail:'#efd0ff',bx:.54,by:.69,hx:.58,hy:.60,bzoom:.34,hzoom:.46},
+  rank_predador:{kind:'ranked',level:5,base:'#a76a0d',dark:'#3b2204',accent:'#ffbd24',detail:'#fff09c',bx:.54,by:.69,hx:.58,hy:.60,bzoom:.34,hzoom:.46},
+  rank_lenda:{kind:'ranked',level:6,base:'#a61515',dark:'#3d0505',accent:'#ff3e27',detail:'#ffce8b',bx:.54,by:.69,hx:.58,hy:.60,bzoom:.34,hzoom:.46},
+  rank_suprema:{kind:'ranked',level:7,base:'#10863f',dark:'#03331b',accent:'#2dff77',detail:'#ffd94c',bx:.54,by:.69,hx:.58,hy:.60,bzoom:.34,hzoom:.46}
+};
+
+function skinHasArenaVisual(skin){
+  return !!(skin && (skin.combatSprite || skinAppearanceProfiles[skin.id]));
+}
+
+const skinTextureCache={};
+function preloadAllSkinTextures(){
+  for(const s of allSkins()){
+    const im=new Image();
+    im.src=s.image;
+    skinTextureCache[s.id]=im;
+  }
+}
+preloadAllSkinTextures();
+
+function skinProfile(skin){
+  return skinAppearanceProfiles[skin?.id] || {
+    kind:'natural',level:1,base:'#2a8753',dark:'#0b2e1d',accent:'#62ffa0',detail:'#d8ffe8',
+    bx:.5,by:.55,hx:.62,hy:.5,bzoom:.38,hzoom:.42
+  };
+}
+function rgbHexAlpha(hex,a){
+  if(!hex||hex[0]!=='#'||hex.length!==7)return `rgba(255,255,255,${a})`;
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function platePath(c,w,h,kind){
+  c.beginPath();
+  if(kind==='ranked'){
+    c.moveTo(-w*.48,0);c.lineTo(-w*.26,-h*.48);c.lineTo(w*.30,-h*.48);
+    c.lineTo(w*.50,0);c.lineTo(w*.30,h*.48);c.lineTo(-w*.26,h*.48);c.closePath();
+  }else if(kind==='patent'){
+    c.moveTo(-w*.48,-h*.10);c.quadraticCurveTo(-w*.22,-h*.55,w*.18,-h*.48);
+    c.quadraticCurveTo(w*.50,-h*.25,w*.48,0);
+    c.quadraticCurveTo(w*.42,h*.38,w*.05,h*.48);
+    c.quadraticCurveTo(-w*.35,h*.42,-w*.48,-h*.10);c.closePath();
+  }else if(kind==='lunar'){
+    c.ellipse(0,0,w*.50,h*.43,-.04,0,Math.PI*2);
+  }else{
+    c.ellipse(0,0,w*.50,h*.46,0,0,Math.PI*2);
+  }
+}
+function drawTextureCrop(c,img,p,w,h,index,isHead=false){
+  if(!img||!img.complete||!img.naturalWidth)return false;
+  const iw=img.naturalWidth,ih=img.naturalHeight;
+  const zoom=isHead?(p.hzoom||.43):(p.bzoom||.36);
+  let sw=iw*zoom,sh=ih*zoom;
+  const drift=isHead?0:((index%9)-4)*.012;
+  const nx=(isHead?p.hx:p.bx)+drift, ny=(isHead?p.hy:p.by);
+  let sx=nx*iw-sw/2,sy=ny*ih-sh/2;
+  sx=Math.max(0,Math.min(iw-sw,sx));sy=Math.max(0,Math.min(ih-sh,sy));
+  c.drawImage(img,sx,sy,sw,sh,-w/2,-h/2,w,h);
+  return true;
+}
+function drawDorsalSpikes(c,p,w,h,level,strong=false){
+  const count=Math.min(4,strong?Math.ceil(level/2)+1:Math.ceil(level/3)+1);
+  c.fillStyle=rgbHexAlpha(p.accent,strong?.95:.70);
+  for(let k=0;k<count;k++){
+    const xx=-w*.20+k*(w*.40/Math.max(1,count-1));
+    const hh=h*(strong?.34:.22)*(1-k*.05);
+    c.beginPath();c.moveTo(xx-h*.10,-h*.34);c.lineTo(xx,-h*.34-hh);c.lineTo(xx+h*.10,-h*.34);c.closePath();c.fill();
+  }
+}
+function drawBodyMotif(c,p,w,h,index,isPlayer){
+  const level=p.level||1;
+  c.lineWidth=Math.max(1,h*.055);
+  if(p.kind==='natural'){
+    c.strokeStyle=rgbHexAlpha(p.detail,.45);c.beginPath();c.arc(-w*.12,0,h*.18,Math.PI*.9,Math.PI*1.9);c.stroke();
+  }else if(p.kind==='aurora'){
+    c.strokeStyle=rgbHexAlpha(p.detail,.70);c.beginPath();c.moveTo(-w*.36,-h*.12);c.quadraticCurveTo(0,h*.35,w*.36,-h*.12);c.stroke();
+    c.shadowColor=p.accent;c.shadowBlur=isPlayer?10:4;
+  }else if(p.kind==='lunar'){
+    c.strokeStyle=rgbHexAlpha(p.detail,.85);c.beginPath();c.arc(0,0,h*.24,-1.15,1.15);c.stroke();
+  }else if(p.kind==='toxic'){
+    c.fillStyle=rgbHexAlpha(p.detail,.70);
+    for(let q=0;q<3;q++){c.beginPath();c.arc((-1+q)*w*.16,(q%2?.10:-.08)*h,h*.075,0,Math.PI*2);c.fill();}
+    if(index%4===0)drawDorsalSpikes(c,p,w,h,2,false);
+  }else if(p.kind==='patent'){
+    c.strokeStyle=rgbHexAlpha(p.detail,.68);
+    for(let q=0;q<Math.min(3,Math.ceil(level/2));q++){const x=-w*.18+q*w*.18;c.beginPath();c.moveTo(x,-h*.30);c.lineTo(x+h*.16,0);c.lineTo(x,h*.30);c.stroke();}
+    if(level>=5&&index%3===0)drawDorsalSpikes(c,p,w,h,level,false);
+  }else if(p.kind==='ranked'){
+    c.strokeStyle=rgbHexAlpha(p.detail,.9);
+    c.beginPath();c.moveTo(-w*.34,0);c.lineTo(-w*.10,-h*.24);c.lineTo(w*.12,0);c.lineTo(w*.34,-h*.24);c.stroke();
+    if(index%2===0)drawDorsalSpikes(c,p,w,h,level,true);
+  }
+  c.shadowBlur=0;
+}
+function drawTexturedPlate(c,skin,p,img,x,y,r,angle,taper,index,isPlayer){
+  const h=r*1.78*taper,w=r*2.45*taper;
+  c.save();c.translate(x,y);c.rotate(angle);
+  c.shadowColor=rgbHexAlpha(p.accent,isPlayer?.45:.22);c.shadowBlur=isPlayer?10:4;
+  platePath(c,w,h,p.kind);c.fillStyle=p.base;c.fill();c.shadowBlur=0;
+  c.save();platePath(c,w,h,p.kind);c.clip();
+  if(drawTextureCrop(c,img,p,w,h,index,false)){
+    c.fillStyle=rgbHexAlpha(p.base,.16);c.fillRect(-w/2,-h/2,w,h);
+  }
+  c.restore();
+  platePath(c,w,h,p.kind);c.strokeStyle=rgbHexAlpha(p.accent,.68);c.lineWidth=Math.max(1,h*.045);c.stroke();
+  drawBodyMotif(c,p,w,h,index,isPlayer);
+  c.restore();
+}
+function drawHeadOrnaments(c,p,r,isPlayer){
+  const level=p.level||1;
+  c.lineWidth=Math.max(1,r*.10);
+  if(p.kind==='aurora'){
+    c.strokeStyle=rgbHexAlpha(p.detail,.9);c.shadowColor=p.accent;c.shadowBlur=isPlayer?14:5;
+    c.beginPath();c.arc(-r*.10,0,r*1.25,-1.05,1.05);c.stroke();c.shadowBlur=0;
+  }else if(p.kind==='lunar'){
+    c.strokeStyle=rgbHexAlpha(p.detail,.95);c.lineWidth=r*.16;
+    c.beginPath();c.arc(r*.18,-r*.14,r*.64,-1.05,1.05);c.stroke();
+  }else if(p.kind==='toxic'){
+    c.fillStyle=rgbHexAlpha(p.accent,.95);
+    for(let k=-1;k<=1;k++){c.beginPath();c.moveTo(-r*.35,k*r*.28);c.lineTo(-r*1.15,k*r*.38);c.lineTo(-r*.42,k*r*.10);c.closePath();c.fill();}
+  }else if(p.kind==='patent'){
+    c.strokeStyle=rgbHexAlpha(p.detail,.9);
+    const n=Math.min(4,Math.ceil(level/2));
+    for(let k=0;k<n;k++){const yy=(k-(n-1)/2)*r*.22;c.beginPath();c.moveTo(-r*.55,yy);c.lineTo(-r*.12,yy-r*.18);c.lineTo(r*.22,yy);c.stroke();}
+    if(level>=6){c.fillStyle=rgbHexAlpha(p.accent,.95);c.beginPath();c.moveTo(-r*.10,-r*.72);c.lineTo(r*.22,-r*1.25);c.lineTo(r*.45,-r*.68);c.closePath();c.fill();}
+  }else if(p.kind==='ranked'){
+    c.fillStyle=rgbHexAlpha(p.accent,.96);
+    const crown=Math.min(4,Math.ceil(level/2));
+    for(let k=0;k<crown;k++){const xx=(-.35+k*(.70/Math.max(1,crown-1)))*r;c.beginPath();c.moveTo(xx-r*.12,-r*.62);c.lineTo(xx,-r*(1.15+.06*level));c.lineTo(xx+r*.12,-r*.62);c.closePath();c.fill();}
+    c.strokeStyle=rgbHexAlpha(p.detail,.9);c.beginPath();c.arc(r*.10,0,r*.82,-.55,.55);c.stroke();
+  }else if(p.kind==='natural'){
+    c.strokeStyle=rgbHexAlpha(p.detail,.7);c.beginPath();c.arc(r*.20,0,r*.75,-.45,.45);c.stroke();
+  }
+}
+function drawTexturedHead(c,skin,p,img,x,y,r,angle,isPlayer){
+  const w=r*(p.kind==='ranked'?3.15:p.kind==='patent'?2.95:3.0);
+  const h=r*(p.kind==='ranked'?2.18:2.05);
+  c.save();c.translate(x,y);c.rotate(angle);
+  c.shadowColor=rgbHexAlpha(p.accent,isPlayer?.60:.28);c.shadowBlur=isPlayer?14:5;
+  c.beginPath();c.ellipse(0,0,w*.5,h*.5,0,0,Math.PI*2);c.fillStyle=p.dark;c.fill();c.shadowBlur=0;
+  c.save();c.beginPath();c.ellipse(0,0,w*.49,h*.48,0,0,Math.PI*2);c.clip();
+  if(drawTextureCrop(c,img,p,w,h,0,true)){
+    c.fillStyle=rgbHexAlpha(p.base,.10);c.fillRect(-w/2,-h/2,w,h);
+  }
+  c.restore();
+  c.beginPath();c.ellipse(0,0,w*.5,h*.5,0,0,Math.PI*2);c.strokeStyle=rgbHexAlpha(p.accent,.88);c.lineWidth=Math.max(1,r*.10);c.stroke();
+  drawHeadOrnaments(c,p,r,isPlayer);
+  c.restore();
+}
+function drawProfileSnake(c,s,skin){
+  const p=skinProfile(skin),img=skinTextureCache[skin.id],r=s.radius;
+  c.beginPath();c.moveTo(s.x,s.y);
+  for(const q of s.segments.slice(1,-2))c.lineTo(q.x,q.y);
+  c.lineCap='round';c.lineJoin='round';c.strokeStyle=p.dark;c.lineWidth=r*1.72;
+  c.shadowColor=rgbHexAlpha(p.accent,s.isPlayer?.32:.14);c.shadowBlur=s.isPlayer?10:3;c.stroke();c.shadowBlur=0;
+
+  const stride=s.isPlayer?2:5;
+  for(let i=s.segments.length-1;i>=2;i--){
+    if(i%stride!==0&&i!==s.segments.length-1)continue;
+    const q=s.segments[i],pr=s.segments[Math.max(1,i-1)];
+    const a=Math.atan2(pr.y-q.y,pr.x-q.x);
+    const taper=Math.min(1,.38+(s.segments.length-i)/9);
+    drawTexturedPlate(c,skin,p,img,q.x,q.y,r,a,taper,i,s.isPlayer);
+  }
+  drawTexturedHead(c,skin,p,img,s.x,s.y,r,s.angle,s.isPlayer);
+}
+
+function auditSkinAppearances(){
+  const all=allSkins(),missing=all.filter(s=>!skinHasArenaVisual(s));
+  console.info(`[VÍBORA.IO] Auditoria de skins: ${all.length-missing.length}/${all.length} com aparência de arena.`,missing.map(s=>s.id));
+  return {total:all.length,ready:all.length-missing.length,missing:missing.map(s=>s.id)};
+}
+window.__viboraSkinAudit=auditSkinAppearances();
+
 /* ===== ARENA: approved flexible-body basis, kept isolated from HUB ===== */
 const canvas=$('#gameCanvas'),ctx=canvas.getContext('2d'),mini=$('#mini'),mctx=mini.getContext('2d');
 let W=0,H=0,CX=3000,CY=3000,ARENA=2650,BOT_COUNT=25;
-const BOT_SKIN_IDS=['gladiador','infernal','samurai','farao','cyborg'];
+const BOT_SKIN_IDS=skins.map(s=>s.id);
 function randomBotSkin(){return findSkin(BOT_SKIN_IDS[Math.floor(Math.random()*BOT_SKIN_IDS.length)]);}
 let player=null,bots=[],foods=[],gameKills=0,pointer=null,boostHeld=false,paused=false,gameRAF=0,last=0,runStartTime=0,runStartScore=5000,lastRpResult=null;
 const rand=(a,b)=>a+Math.random()*(b-a), clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -1403,6 +1599,7 @@ function drawSnake(s,c){
  const armored=!!skin?.combatSprite,r=s.radius;
 
  if(armored){
+   // 5 skins recuperadas do Víbora antigo: sprites reais cabeça + corpo.
    ctx.beginPath();ctx.moveTo(s.x,s.y);
    for(const p of s.segments.slice(1,-3))ctx.lineTo(p.x,p.y);
    ctx.lineCap='round';ctx.lineJoin='round';
@@ -1422,15 +1619,12 @@ function drawSnake(s,c){
      ctx.beginPath();ctx.arc(s.x,s.y,r*1.3,0,Math.PI*2);ctx.fillStyle=skin.combatColor||`hsl(${s.hue},88%,64%)`;ctx.fill();
    }
  }else{
-   if(s.skinGlow){ctx.shadowBlur=s.isPlayer?s.skinGlow:Math.min(5,s.skinGlow);ctx.shadowColor=`hsl(${s.hue},95%,62%)`;}
-   for(let i=s.segments.length-1;i>=1;i--){
-     const p=s.segments[i],t=i/Math.max(1,s.segments.length-1),rr=s.radius*(1-t*.13),ua=s.hue2!=null&&(i%6<3),hh=ua?s.hue2:s.hue;
-     ctx.beginPath();ctx.arc(p.x,p.y,rr,0,Math.PI*2);ctx.fillStyle=`hsl(${hh},78%,58%)`;ctx.fill();
-   }
-   ctx.beginPath();ctx.arc(s.x,s.y,s.radius*1.22,0,Math.PI*2);ctx.fillStyle=`hsl(${s.hue},88%,64%)`;ctx.fill();ctx.shadowBlur=0;
+   // Todas as demais skins: artwork real da loja + corpo/cabeça exclusivos.
+   drawProfileSnake(ctx,s,skin);
  }
  ctx.restore();
 }
+
 function render(){
  const c=cam();ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);ctx.clearRect(0,0,W,H);
  ctx.save();ctx.scale(c.z,c.z);ctx.translate(-c.x,-c.y);ctx.strokeStyle='#ffffff09';ctx.lineWidth=1/c.z;const st=100,left=c.x,right=c.x+W/c.z,top=c.y,bottom=c.y+H/c.z;for(let x=Math.floor(left/st)*st;x<right;x+=st){ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bottom);ctx.stroke()}for(let y=Math.floor(top/st)*st;y<bottom;y+=st){ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(right,y);ctx.stroke()}ctx.beginPath();ctx.arc(CX,CY,ARENA,0,Math.PI*2);ctx.strokeStyle='#ff555577';ctx.lineWidth=7/c.z;ctx.stroke();for(const f of foods){ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,Math.PI*2);ctx.fillStyle=`hsl(${f.h},92%,66%)`;ctx.fill()}ctx.restore();
